@@ -6,6 +6,16 @@ class Order < ApplicationRecord
   validates :reference, presence: true, uniqueness: true
   validates :storage, presence: true
 
+  def update_stock
+    ActiveRecord::Base.transaction do
+      update!(ready: true, ready_at: Time.current)
+      deduct_stock
+    end
+  rescue StandardError => e
+    errors.add(:base, e.message)
+    false
+  end
+
   def self.all_products_valid?(products)
     products.all? { |product| Product.exists?(reference: product[:reference]) }
   end
@@ -19,7 +29,6 @@ class Order < ApplicationRecord
       else
         order_items.create(product: product, quantity: product_data[:quantity])
       end
-      
     end
   end
 
@@ -33,7 +42,9 @@ class Order < ApplicationRecord
   def deduct_stock
     order_items.each do |order_item|
       stock = Stock.find_by(product: order_item.product, storage: storage)
-      stock.update!(quantity: stock.quantity - order_item.quantity)
+      stock.update!(quantity: stock.quantity - order_item.quantity) if stock
     end
+
+    true
   end
 end

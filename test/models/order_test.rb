@@ -1,7 +1,7 @@
-require "test_helper"
+require 'test_helper'
 
 class OrderTest < ActiveSupport::TestCase
- def setup
+  def setup
     @storage = Storage.create(name: 'Main Storage')
     @product = Product.create(reference: 'P001', name: 'Product 1')
     @order = @storage.orders.create(reference: 'ORD001')

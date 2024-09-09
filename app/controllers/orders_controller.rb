@@ -22,7 +22,11 @@ class OrdersController < ApplicationController
 
   def create
     return render json: { message: 'Storage not found' }, status: :not_found unless @storage
-    return render json: { message: 'Quantities of products must be greaten than 0' }, status: :unprocessable_entity unless quantities_valid?
+
+    unless quantities_valid?
+      return render json: { message: 'Quantities of products must be greaten than 0' },
+                    status: :unprocessable_entity
+    end
 
     unless Order.all_products_valid?(order_params[:products])
       return render json: { message: "Verify product's reference" },
@@ -48,9 +52,9 @@ class OrdersController < ApplicationController
                     status: :unprocessable_entity
     end
 
-    ActiveRecord::Base.transaction do
-      @order.update!(ready: true, ready_at: Time.current)
-      @order.deduct_stock
+    unless @order.update_stock
+      return render json: { message: @order.errors.full_messages.to_sentence },
+                    status: :unprocessable_entity
     end
 
     render json: { message: 'Order marked as ready successfully' }, status: :ok
@@ -71,6 +75,6 @@ class OrdersController < ApplicationController
   end
 
   def quantities_valid?
-    order_params[:products].all? { |products| products[:quantity].to_i > 0 }
+    order_params[:products].all? { |products| products[:quantity].to_i.positive? }
   end
 end

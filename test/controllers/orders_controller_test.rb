@@ -11,7 +11,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test 'should get index' do
     get orders_url
     assert_response :success
-  
+
     response_body = JSON.parse(response.body)
     assert_not_empty response_body
     assert_includes response_body.first.keys, 'reference'
